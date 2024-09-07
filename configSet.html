@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="static/favicon.ico" type="image/x-icon" />
+    <title>AutoTask</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="static/base64.min.js"></script>
+    <script src="static/md5.min.js"></script>
+    <script src="static/axios.min.js"></script>
+    <script src="static/vue2.js"></script>
+    <script src="static/elementui.js"></script>
+    <style>
+        .container {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .item {
+            min-width: 370px;
+            flex: 0 1 auto;
+        }
+
+        /* css 注释说明：设置了浏览器宽度大于700px时 item 显示600px宽度 */
+        @media screen and (min-width: 701px) {
+            .item {
+                min-width: 600px
+            }
+        }
+
+        /* 设置了浏览器宽度不大于700px时 item 显示370px宽度 */
+        @media screen and (max-width:700px) {
+            .item {
+                min-width: 370px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app" v-if="dialogConfigFormVisible">
+
+        <el-container>
+            <el-header>
+                <h2 style="text-align: center;">{{dialogConfigTitle}}</h2>
+            </el-header>
+            <el-main>
+
+                <el-form :model="form" ref="configForm" label-width="160px" size="small">
+
+                    <!-- 多选框 -->
+                    <el-form-item v-for="task in configData.TaskList" :label="task.title" :key="task.title">
+                        <el-checkbox-group v-model="form[task.key]">
+                            <el-checkbox-button v-for="val in task.list" :label="val" :name="task.title"
+                                :key="val"></el-checkbox-button>
+                        </el-checkbox-group>
+                    </el-form-item>
+
+                    <!-- 开关 -->
+                    <el-form-item label="开关：">
+                        <el-switch style="margin-right: 20px;" v-for="(val,key) in configData.Switch"
+                            v-model="form[key]" :key="key" :inactive-text="val"></el-switch>
+                    </el-form-item>
+
+                    <!-- 文本框 -->
+                    <div class="container">
+                        <div class="item">
+                            <el-form-item label="遮罩层透明度：">
+                                <div class="block">
+                                    <el-slider v-model="form.maskLayerAlpha" :min="0" :max="255" show-input>
+                                    </el-slider>
+                                </div>
+                            </el-form-item>
+                        </div>
+                        <div class="item">
+                            <el-form-item label="循环次数：">
+                                <el-input-number v-model="form.batchWhileNum" :min="1" :max="10"></el-input-number>
+                            </el-form-item>
+                        </div>
+                        <div class="item">
+                            <el-form-item label="视频时间：">
+                                <el-input-number v-model="form.spTime" :min="0" :step="100"></el-input-number>
+                            </el-form-item>
+                        </div>
+                        <div class="item">
+                            <el-form-item label="酷狗红包金额：">
+                                <el-input v-model="form.kghbAmount"></el-input>
+                            </el-form-item>
+                        </div>
+                        <div class="item">
+                            <el-form-item label="酷狗账号：">
+                                <el-input v-model="form.kgAccounts"></el-input>
+                            </el-form-item>
+                        </div>
+                        <!-- <div class="item">
+                    <el-form-item label="锁屏密码：">
+                        <el-input v-model="form.pwd" show-password></el-input>
+                    </el-form-item>
+                </div> -->
+                        <div class="item">
+                            <el-form-item label="抖音签到日期：">
+                                <el-date-picker v-model="form.dySignDate" value-format="yyyy-MM-dd" type="date"
+                                    placeholder="选择日期"></el-date-picker>
+                            </el-form-item>
+                        </div>
+                        <div class="item">
+                            <el-form-item label="抖音极速版签到日期：">
+                                <el-date-picker v-model="form.dyjsSignDate" value-format="yyyy-MM-dd" type="date"
+                                    placeholder="选择日期"></el-date-picker>
+                            </el-form-item>
+                        </div>
+                        <div class="item">
+                            <el-form-item label="西瓜视频签到日期：">
+                                <el-date-picker v-model="form.xgSignDate" value-format="yyyy-MM-dd" type="date"
+                                    placeholder="选择日期"></el-date-picker>
+                            </el-form-item>
+                        </div>
+                        <div class="item">
+                            <el-form-item label="头条极速版签到日期">
+                                <el-date-picker v-model="form.ttjsSignDate" value-format="yyyy-MM-dd" type="date"
+                                    placeholder="选择日期"></el-date-picker>
+                            </el-form-item>
+                        </div>
+                        <div class="item">
+                            <el-form-item label="更新时间">
+                                <el-date-picker v-model="form.updateTime" type="datetime" placeholder=""
+                                    :disabled="true"></el-date-picker>
+                            </el-form-item>
+                        </div>
+                        <div class="item">
+                            <el-form-item label="设备ID：">
+                                <el-input v-model="form.deviceId" :disabled="true"></el-input>
+                            </el-form-item>
+                        </div>
+                    </div>
+
+                </el-form>
+            </el-main>
+            <el-footer>
+                <div style="width: 100%; text-align:center;">
+                    <el-button type="primary" @click="saveConfig">保 存</el-button>
+                </div>
+            </el-footer>
+        </el-container>
+
+    </div>
+</body>
+
+</html>
+
+<script>
+    var app = new Vue({
+        el: '#app',
+        data: {
+            loading: null,
+            access_token: Base64.decode('P2FjY2Vzc190b2tlbj05OGQ4OGI4YmQ3MDEyMjA0NzcwZGVmZTNmM2RjNTk0ZA=='),
+            fileApiUrl: Base64.decode('aHR0cHM6Ly9naXRlZS5jb20vYXBpL3Y1L3JlcG9zL3d4cTEyMTM4L0RCRmlsZS9jb250ZW50cy8='),
+            apiUrl: Base64.decode('aHR0cHM6Ly9naXRlZS5jb20vYXBpL3Y1L3JlcG9zL3d4cTEyMTM4L0RCRmlsZS9jb250ZW50cy9kZXZpY2VJbmZvLmpzb24/YWNjZXNzX3Rva2VuPTk4ZDg4YjhiZDcwMTIyMDQ3NzBkZWZlM2YzZGM1OTRk'),
+            myDevice: {},
+            dialogConfigFormVisible: false,
+            dialogConfigTitle: '',
+            configData: {},//配置选项
+            configSha: '',
+            form: {},
+        },
+        created() {
+            this.init();
+        },
+        methods: {
+            //获取url参数
+            getQueryVariable(variable) {
+                var query = window.location.search.substring(1);
+                var vars = query.split("&");
+                for (var i = 0; i < vars.length; i++) {
+                    var pair = vars[i].split("=");
+                    if (pair[0] == variable) { return pair[1]; }
+                }
+                return false;
+            },
+            //打开加载框
+            openLoading() {
+                if (this.loading) return;
+                this.loading = this.$loading({
+                    lock: true,
+                    text: '处理中,请稍后......',
+                    spinner: 'el-icon-loading',
+                    background: 'rgba(0, 0, 0, 0.7)'
+                });
+            },
+            //关闭加载框
+            closeLoading() {
+                if (!this.loading) return;
+                this.loading.close();
+                this.loading = null;
+            },
+            //成功消息
+            msgSuccess(msg = '保存成功！') {
+                this.$message({
+                    showClose: true,
+                    message: msg,
+                    type: 'success',
+                    duration: 1500
+                });
+            },
+            //失败消息
+            msgError(msg = '保存失败，请刷新数据重试！') {
+                this.$message({
+                    showClose: true,
+                    message: msg,
+                    type: 'error'
+                });
+            },
+            //初始化
+            init() {
+                this.myDevice.deviceId = this.getQueryVariable('deviceId');
+                if (this.myDevice.deviceId) {
+                    this.ReadDevice();
+                }
+                else {
+                    this.gotoErrPage();
+                }
+            },
+            //错误页面
+            gotoErrPage() {
+                window.location.href = 'error.html';
+            },
+            //读取设备脚本信息
+            ReadDevice() {
+                this.openLoading();
+                axios.get(this.apiUrl)
+                    .then((res) => {
+                        let data = res.data;
+                        let content = JSON.parse(Base64.decode(data.content));
+                        this.myDevice = content.data.find(x => x.deviceId === this.myDevice.deviceId);
+                        if (!this.myDevice) {
+                            this.gotoErrPage();
+                            return;
+                        }
+                        this.getConfigData();
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        this.closeLoading();
+                    })
+            },
+            //获取配置选项
+            getConfigData() {
+                let apiUrl = this.fileApiUrl + 'configData.json' + this.access_token;
+                axios.get(apiUrl)
+                    .then((res) => {
+                        let data = res.data;
+                        this.configData = JSON.parse(Base64.decode(data.content));
+                        this.getConfig();
+                    })
+                    .catch((error) => {
+                        this.msgError('获取数据失败！');
+                        console.log(error);
+                    })
+            },
+            //获取配置
+            getConfig() {
+                this.dialogConfigTitle = '配置信息 【' + this.myDevice.remark + '】';
+                let fileName = this.myDevice.deviceId + '.json';
+                let apiUrl = this.fileApiUrl + 'AutoTaskStorage/' + fileName + this.access_token;
+                axios.get(apiUrl)
+                    .then((res) => {
+                        let data = res.data;
+                        this.form = JSON.parse(Base64.decode(data.content));
+                        this.configSha = data.sha;
+                        this.dialogConfigFormVisible = true;
+                    })
+                    .catch((error) => {
+                        this.msgError('获取数据失败！');
+                        console.log(error);
+                    })
+                    this.closeLoading();
+            },
+            //保存配置
+            saveConfig() {
+                //转化成数组
+                if (typeof this.form.kghbAmount == 'string') {
+                    this.form.kghbAmount = this.form.kghbAmount.split(',').filter(x => x.trim() != '');
+                }
+                if (typeof this.form.kgAccounts == 'string') {
+                    this.form.kgAccounts = this.form.kgAccounts.split(',').filter(x => x.trim() != '');
+                }
+                let fileName = this.myDevice.deviceId + '.json';
+                let apiUrl = this.fileApiUrl + 'AutoTaskStorage/' + fileName + this.access_token;
+                let submitData = {
+                    content: Base64.encode(JSON.stringify(this.form, null, 2)),
+                    sha: this.configSha,
+                    message: 'update'
+                };
+                this.openLoading();
+                axios.put(apiUrl, submitData).then(res => {
+                    if (res.status == 200) {
+                        this.getConfig();
+                        this.msgSuccess();
+                    }
+                    else
+                        this.msgError();
+                    this.closeLoading();
+                }).catch(err => {
+                    this.closeLoading();
+                    this.msgError();
+                })
+            },
+        }
+    })
+</script>
